@@ -168,21 +168,9 @@ export async function promiseTimeout<T>(ms: number | undefined, promise: (resolv
 		.finally (cancel)
 	return p as Promise<T>
 }
-function generateRandomString(length) {
-    const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
 
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
-}
-
-const randomString = generateRandomString(20);
 // generate a random ID to attach to a message
-export const generateMessageID = () => randomString + randomBytes(6).toString('hex').toUpperCase()
+export const generateMessageID = () => randomBytes(32).toString('hex').toUpperCase()
 
 export function bindWaitForEvent<T extends keyof BaileysEventMap>(ev: BaileysEventEmitter, event: T) {
 	return async(check: (u: BaileysEventMap[T]) => boolean | undefined, timeoutMs?: number) => {

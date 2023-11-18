@@ -141,43 +141,42 @@ export const encodeBase64EncodedStringForUpload = (b64: string) => (
 	)
 )
 
-export const generateProfilePicture = async(mediaUpload: WAMediaUpload) => {
-	let bufferOrFilePath: Buffer | string
-	if(Buffer.isBuffer(mediaUpload)) {
-		bufferOrFilePath = mediaUpload
-	} else if('url' in mediaUpload) {
-		bufferOrFilePath = mediaUpload.url.toString()
-	} else {
-		bufferOrFilePath = await toBuffer(mediaUpload.stream)
-	}
+export const generateProfilePicture = async (mediaUpload: WAMediaUpload) => {
+    let bufferOrFilePath: Buffer | string;
 
-	const lib = await getImageProcessingLibrary()
-	let img: Promise<Buffer>
-	if('sharp' in lib && typeof lib.sharp?.default === 'function') {
-		img = lib.sharp!.default(bufferOrFilePath)
-			.resize(640, 640)
-			.jpeg({
-				quality: 50,
-			})
-			.toBuffer()
-	} else if('jimp' in lib && typeof lib.jimp?.read === 'function') {
-		const { read, MIME_JPEG, RESIZE_BILINEAR } = lib.jimp
-		const jimp = await read(bufferOrFilePath as any)
-		const min = Math.min(jimp.getWidth(), jimp.getHeight())
-		const cropped = jimp.crop(0, 0, min, min)
+    if (Buffer.isBuffer(mediaUpload)) {
+        bufferOrFilePath = mediaUpload;
+    } else if ('url' in mediaUpload) {
+        bufferOrFilePath = mediaUpload.url.toString();
+    } else {
+        bufferOrFilePath = await toBuffer(mediaUpload.stream);
+    }
 
-		img = cropped
-			.quality(50)
-			.resize(640, 640, RESIZE_BILINEAR)
-			.getBufferAsync(MIME_JPEG)
-	} else {
-		throw new Boom('No image processing library available')
-	}
+    const lib = await getImageProcessingLibrary();
+    let img: Promise<Buffer>;
 
-	return {
-		img: await img,
-	}
-}
+    if ('sharp' in lib && typeof lib.sharp?.default === 'function') {
+        img = lib.sharp!.default(bufferOrFilePath)
+            .jpeg({
+                quality: 50,
+            })
+            .toBuffer();
+    } else if ('jimp' in lib && typeof lib.jimp?.read === 'function') {
+        const { read, MIME_JPEG } = lib.jimp;
+        const jimp = await read(bufferOrFilePath as any);
+        
+        img = jimp
+            .quality(50)
+            .getBufferAsync(MIME_JPEG);
+    } else {
+        throw new Boom('No image processing library available');
+    }
+
+    return {
+        img: await img,
+    };
+};
+
 
 /** gets the SHA256 of the given media message */
 export const mediaMessageSHA256B64 = (message: WAMessageContent) => {
